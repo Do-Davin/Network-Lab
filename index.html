@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network System Design | Do Davin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #0ea5e9;
+            --accent: #22d3ee;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(99, 102, 241, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(34, 211, 238, 0.1) 0%, transparent 40%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, 2%) rotate(1deg); }
+            50% { transform: translate(0, 4%) rotate(0deg); }
+            75% { transform: translate(-2%, 2%) rotate(-1deg); }
+        }
+
+        /* Grid Pattern Overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge::before {
+            content: '🎓';
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .hero h2 {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-weight: 400;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .info-item svg {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray);
+            font-size: 0.875rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .section-header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Lab Cards Grid */
+        .labs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .lab-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+        }
+
+        .lab-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lab-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                        0 0 40px rgba(99, 102, 241, 0.1);
+        }
+
+        .lab-card:hover::before {
+            opacity: 1;
+        }
+
+        .lab-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--gradient);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .lab-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.75rem;
+        }
+
+        .lab-card p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+        }
+
+        .lab-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            padding: 0.35rem 0.75rem;
+            background: rgba(99, 102, 241, 0.15);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lab-card .arrow {
+            position: absolute;
+            bottom: 1.75rem;
+            right: 1.75rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .lab-card:hover .arrow {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateX(3px);
+        }
+
+        /* Project Card - Featured */
+        .featured-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            position: relative;
+        }
+
+        .featured-card::after {
+            content: '⭐ FINAL PROJECT';
+            position: absolute;
+            top: 1.75rem;
+            right: 1.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--gradient);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--white);
+            letter-spacing: 0.5px;
+        }
+
+        .featured-card .lab-number {
+            width: 56px;
+            height: 56px;
+            font-size: 1.5rem;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--gray);
+            border-top: 1px solid var(--border);
+        }
+
+        footer p {
+            font-size: 0.95rem;
+        }
+
+        footer .heart {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .labs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-info {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .featured-card::after {
+                position: static;
+                display: inline-block;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="badge">Institute of Technology of Cambodia</div>
+            <h1>Network System Design</h1>
+            <h2>Lab Portfolio & Documentation</h2>
+            
+            <div class="hero-info">
+                <div class="info-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span>Do Davin</span>
+                </div>
+                <div class="info-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                    </svg>
+                    <span>P20230018</span>
+                </div>
+                <div class="info-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>Instructor: Mr. Kuy Movsun</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-indicator">
+            <span>Scroll to explore</span>
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">11</div>
+                <div class="stat-label">Lab Sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Final Project</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">Y3</div>
+                <div class="stat-label">Academic Year</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2025</div>
+                <div class="stat-label">Semester</div>
+            </div>
+        </div>
+
+        <!-- Labs Section -->
+        <section>
+            <div class="section-header">
+                <h2>Lab Documentation</h2>
+                <p>Comprehensive hands-on labs covering networking fundamentals, protocols, and system design</p>
+            </div>
+
+            <div class="labs-grid">
+                <a href="Lab02/Lab02.html" class="lab-card">
+                    <div class="lab-number">02</div>
+                    <h3>Network Performance, Layers & Security</h3>
+                    <p>Exploring delay, loss, throughput calculations and understanding network layers with security fundamentals.</p>
+                    <div class="lab-tags">
+                        <span class="tag">Performance</span>
+                        <span class="tag">OSI Model</span>
+                        <span class="tag">Security</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab03/Lab3.html" class="lab-card">
+                    <div class="lab-number">03</div>
+                    <h3>Wireshark & Protocol Analysis</h3>
+                    <p>Hands-on packet capture and analysis using Wireshark to understand network traffic.</p>
+                    <div class="lab-tags">
+                        <span class="tag">Wireshark</span>
+                        <span class="tag">Packet Analysis</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab04/Lab4.html" class="lab-card">
+                    <div class="lab-number">04</div>
+                    <h3>UDP Socket Programming</h3>
+                    <p>Building client-server applications using UDP protocol with Python socket programming.</p>
+                    <div class="lab-tags">
+                        <span class="tag">UDP</span>
+                        <span class="tag">Python</span>
+                        <span class="tag">Sockets</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab05/Lab5.html" class="lab-card">
+                    <div class="lab-number">05</div>
+                    <h3>UDP Visualization & DNS</h3>
+                    <p>Visualizing UDP traffic flow and understanding DNS query mechanisms using Packet Tracer.</p>
+                    <div class="lab-tags">
+                        <span class="tag">UDP</span>
+                        <span class="tag">DNS</span>
+                        <span class="tag">Packet Tracer</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab06/Lab6.html" class="lab-card">
+                    <div class="lab-number">06</div>
+                    <h3>TCP Protocol Deep Dive</h3>
+                    <p>Understanding TCP connection establishment, flow control, and reliable data transfer.</p>
+                    <div class="lab-tags">
+                        <span class="tag">TCP</span>
+                        <span class="tag">3-Way Handshake</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab07/Lab7.html" class="lab-card">
+                    <div class="lab-number">07</div>
+                    <h3>IP Addressing & Subnetting</h3>
+                    <p>Mastering IPv4 addressing schemes, subnet calculations, and network design.</p>
+                    <div class="lab-tags">
+                        <span class="tag">IPv4</span>
+                        <span class="tag">Subnetting</span>
+                        <span class="tag">CIDR</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab08/Lab8.html" class="lab-card">
+                    <div class="lab-number">08</div>
+                    <h3>Routing Fundamentals</h3>
+                    <p>Configuring static and dynamic routing protocols for inter-network communication.</p>
+                    <div class="lab-tags">
+                        <span class="tag">Routing</span>
+                        <span class="tag">Static Routes</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab09/Lab9.html" class="lab-card">
+                    <div class="lab-number">09</div>
+                    <h3>NAT Configuration</h3>
+                    <p>Implementing Network Address Translation for private-to-public IP address mapping.</p>
+                    <div class="lab-tags">
+                        <span class="tag">NAT</span>
+                        <span class="tag">PAT</span>
+                        <span class="tag">Router Config</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab10/Lab10.html" class="lab-card">
+                    <div class="lab-number">10</div>
+                    <h3>DHCP Services</h3>
+                    <p>Setting up Dynamic Host Configuration Protocol for automatic IP address assignment.</p>
+                    <div class="lab-tags">
+                        <span class="tag">DHCP</span>
+                        <span class="tag">IP Pools</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab11/lab11.html" class="lab-card">
+                    <div class="lab-number">11</div>
+                    <h3>VLAN Configuration</h3>
+                    <p>Creating and managing Virtual LANs for network segmentation and traffic isolation.</p>
+                    <div class="lab-tags">
+                        <span class="tag">VLAN</span>
+                        <span class="tag">Trunking</span>
+                        <span class="tag">Switch</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="Lab12/lab12.html" class="lab-card">
+                    <div class="lab-number">12</div>
+                    <h3>Network Security & ACLs</h3>
+                    <p>Implementing Access Control Lists for traffic filtering and network security policies.</p>
+                    <div class="lab-tags">
+                        <span class="tag">ACL</span>
+                        <span class="tag">Security</span>
+                        <span class="tag">Firewall</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+
+                <a href="project/project.html" class="lab-card featured-card">
+                    <div class="lab-number">🚀</div>
+                    <h3>Enterprise Network Design Project</h3>
+                    <p>Comprehensive network design implementing VLANs, routing, NAT, DHCP, and security policies for a complete enterprise infrastructure solution.</p>
+                    <div class="lab-tags">
+                        <span class="tag">VLAN</span>
+                        <span class="tag">Routing</span>
+                        <span class="tag">NAT</span>
+                        <span class="tag">DHCP</span>
+                        <span class="tag">Security</span>
+                        <span class="tag">Enterprise</span>
+                    </div>
+                    <div class="arrow">→</div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>Made with <span class="heart">♥</span> by Do Davin | Network System Design © 2025</p>
+    </footer>
+
+    <script>
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add intersection observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.lab-card, .stat-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

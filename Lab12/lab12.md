@@ -161,11 +161,46 @@ Switch(config-if)#switchport mode trunk
 
 * switch 1:
 
-```css
-```
+![alt text](image-4.png)
+
+![alt text](image-5.png)
+
+# IP config:
+
+![alt text](image-6.png)
+
+![alt text](image-7.png)
+
+![alt text](image-8.png)
+
+![alt text](image-9.png)
+
+![alt text](image-10.png)
+
+![alt text](image-11.png)
+
+![alt text](image-12.png)
+
+![alt text](image-13.png)
 
 ---
 
-
-
 # Part 4: Synthesis Challenge - "A Day in the Life"
+
+![alt text](image-14.png)
+
+![alt text](image-15.png)
+
+![alt text](image-16.png)
+
+1. Router-on-Stick & Trunk Mode:
+
+A single physical connection can be used to transport traffic from multiple VLANs to a router. By using trunk mode with 802.1Q tagging, VLAN information is preserved in each frame, allowing the router to identify the source VLAN and perform inter-VLAN routing correctly.
+
+2. 12-bit VLAN ID Purpose:
+
+The 12-bit VLAN ID field in an 802.1Q frame is used to uniquely label VLANs in the range of 1 to 4094. This identifier allows switches and routers to recognize which VLAN a frame belongs to, ensuring proper traffic separation and forwarding.
+
+3. VLANs & Broadcast Domain Reduction:
+
+VLANs divide a network into multiple broadcast domains. Broadcast traffic is restricted to the VLAN in which it originates and is not forwarded to other VLANs, which helps reduce unnecessary broadcast traffic and improves overall network efficiency.
